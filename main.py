@@ -1,4 +1,5 @@
 from pygame import *
+from random import randint
 
 init()
 # Initialize the game window
@@ -24,6 +25,16 @@ class Player(GameSprite):
   
   def fire(self):
     pass
+
+# Class Enemy
+class Enemy(GameSprite):
+  def update(self):
+    global lost
+    self.rect.y += self.speed
+    if self.rect.y > win_height:
+      self.rect.y = 0
+      self.rect.x = randint(80, win_width - 80)
+      lost += 1
   
 win_width = 700
 win_height = 500
@@ -38,15 +49,24 @@ mixer.music.load("space.ogg")
 mixer.music.set_volume(0.1)
 mixer.music.play(-1)
 
+font.init()
+stat_font = font.SysFont("Arial", 24)
+
 run = True
 finished = False
 
 def start_game():
-    global finished, player
+    global finished, player, lost, enemies, score
     finished = False
+    lost = 0
+    score = 0
     win.fill((0, 0, 0))
     player = Player("rocket.png", 300, 400, 5, 80, 80)
     player.reset()
+    enemies = sprite.Group()
+    for _ in range(5):
+        enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 5), 80, 40)
+        enemies.add(enemy)
     print("Game restarted")
 
 start_game()
@@ -63,8 +83,18 @@ while run:
   
   if not finished:
     win.blit(bg, (0, 0))
+
+    # Display score and lost count
+    text_score = stat_font.render(f"Score: {score}", True, (255, 255, 255))
+    text_lost = stat_font.render(f"Lost: {lost}", True, (255, 255, 255))
+    win.blit(text_score, (10, 10))
+    win.blit(text_lost, (10, 50))
+    # Update and draw player and enemies
     player.update()
+    enemies.update()
+
     player.reset()
+    enemies.draw(win)
 
 
   display.update()
