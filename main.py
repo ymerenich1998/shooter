@@ -89,6 +89,7 @@ while run:
     text_lost = stat_font.render(f"Lost: {lost}", True, (255, 255, 255))
     win.blit(text_score, (10, 10))
     win.blit(text_lost, (10, 50))
+    
     # Update and draw player and enemies
     player.update()
     enemies.update()
