@@ -103,6 +103,9 @@ while run:
   if not finished:
     win.blit(bg, (0, 0))
 
+    # win.blit(win_text, (win_width // 2 - win_text.get_width() // 2, win_height // 2 - win_text.get_height() // 2))
+    # win.blit(lose_text, (win_width // 2 - lose_text.get_width() // 2, win_height // 2 - lose_text.get_height() // 2))
+
     # Display score and lost count
     text_score = stat_font.render(f"Score: {score}", True, (255, 255, 255))
     text_lost = stat_font.render(f"Lost: {lost}", True, (255, 255, 255))
