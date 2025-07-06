@@ -24,7 +24,8 @@ class Player(GameSprite):
       self.rect.x += self.speed
   
   def fire(self):
-    pass
+    bullet = Bullet("bullet.png", self.rect.centerx, self.rect.top, 10, 15, 20)
+    bullets.add(bullet)
 
 # Class Enemy
 class Enemy(GameSprite):
@@ -35,6 +36,13 @@ class Enemy(GameSprite):
       self.rect.y = 0
       self.rect.x = randint(80, win_width - 80)
       lost += 1
+
+# Class Bullet
+class Bullet(GameSprite):
+  def update(self):
+    self.rect.y -= self.speed
+    if self.rect.y < 0:
+      self.kill()
   
 win_width = 700
 win_height = 500
@@ -49,14 +57,21 @@ mixer.music.load("space.ogg")
 mixer.music.set_volume(0.1)
 mixer.music.play(-1)
 
+fire_sound = mixer.Sound("fire.ogg")
+fire_sound.set_volume(0.1)
+
 font.init()
 stat_font = font.SysFont("Arial", 24)
+result_font = font.SysFont("Arial", 36)
+
+win_text = result_font.render("You win!", True, (0, 255, 0))
+lose_text = result_font.render("You lose!", True, (255, 0, 0))
 
 run = True
 finished = False
 
 def start_game():
-    global finished, player, lost, enemies, score
+    global finished, player, lost, enemies, score, bullets
     finished = False
     lost = 0
     score = 0
@@ -64,8 +79,9 @@ def start_game():
     player = Player("rocket.png", 300, 400, 5, 80, 80)
     player.reset()
     enemies = sprite.Group()
+    bullets = sprite.Group()
     for _ in range(5):
-        enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 5), 80, 40)
+        enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
         enemies.add(enemy)
     print("Game restarted")
 
@@ -80,6 +96,9 @@ while run:
         run = False
       if e.key == K_r:
         start_game()
+      if e.key == K_SPACE:
+        fire_sound.play()
+        player.fire()
   
   if not finished:
     win.blit(bg, (0, 0))
@@ -93,9 +112,11 @@ while run:
     # Update and draw player and enemies
     player.update()
     enemies.update()
+    bullets.update()
 
     player.reset()
     enemies.draw(win)
+    bullets.draw(win)
 
 
   display.update()
