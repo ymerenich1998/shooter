@@ -18,9 +18,9 @@ class GameSprite(sprite.Sprite):
 class Player(GameSprite):
   def update(self):
     keys = key.get_pressed()
-    if keys[K_LEFT] and self.rect.x > 5:
+    if (keys[K_LEFT] or keys[K_a]) and self.rect.x > 5:
       self.rect.x -= self.speed
-    if keys[K_RIGHT] and self.rect.x < win_width - 80:
+    if (keys[K_RIGHT] or keys[K_d]) and self.rect.x < win_width - 80:
       self.rect.x += self.speed
   
   def fire(self):
@@ -101,13 +101,22 @@ while run:
     if e.type == KEYDOWN:
       if e.key == K_ESCAPE:
         run = False
-      if e.key == K_r:
+      if e.key == K_r :
         start_game()
       if e.key == K_SPACE:
         if ammo > 0:
           player.fire()
           ammo -= 1
           fire_sound.play()
+          print("Bullet fired")
+    if e.type == MOUSEBUTTONDOWN:
+      if e.button == 1:
+        if not finished:
+          if ammo > 0:
+            ammo -= 1
+            player.fire()
+            fire_sound.play()
+            print("Bullet fired")
         
   if not finished:
     win.blit(bg, (0, 0))
