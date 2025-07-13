@@ -26,6 +26,7 @@ class Player(GameSprite):
   def fire(self):
     bullet = Bullet("bullet.png", self.rect.centerx, self.rect.top, 10, 15, 20)
     bullets.add(bullet)
+    
 
 # Class Enemy
 class Enemy(GameSprite):
@@ -70,11 +71,15 @@ lose_text = result_font.render("You lose!", True, (255, 0, 0))
 run = True
 finished = False
 
+max_ammo = 10
+
 def start_game():
-    global finished, player, lost, enemies, score, bullets
+    global finished, player, lost, enemies, score, bullets, ammo, life    
     finished = False
     lost = 0
     score = 0
+    ammo = 10
+    life = 3
     win.fill((0, 0, 0))
     player = Player("rocket.png", 300, 400, 5, 80, 80)
     player.reset()
@@ -84,6 +89,7 @@ def start_game():
         enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
         enemies.add(enemy)
     print("Game restarted")
+
 
 start_game()
 
@@ -97,9 +103,11 @@ while run:
       if e.key == K_r:
         start_game()
       if e.key == K_SPACE:
-        fire_sound.play()
-        player.fire()
-  
+        if ammo > 0:
+          player.fire()
+          ammo -= 1
+          fire_sound.play()
+        
   if not finished:
     win.blit(bg, (0, 0))
 
@@ -109,8 +117,14 @@ while run:
     # Display score and lost count
     text_score = stat_font.render(f"Score: {score}", True, (255, 255, 255))
     text_lost = stat_font.render(f"Lost: {lost}", True, (255, 255, 255))
+    text_life = stat_font.render(f"Life: {life}", True, (255, 255, 255))
     win.blit(text_score, (10, 10))
     win.blit(text_lost, (10, 50))
+    win.blit(text_life, (650, 10))
+
+    if life <= 0:
+      finished = True
+      win.blit(lose_text, (win_width // 2 - lose_text.get_width() // 2, win_height // 2 - lose_text.get_height() // 2))
     
     # Update and draw player and enemies
     player.update()
@@ -121,6 +135,32 @@ while run:
     enemies.draw(win)
     bullets.draw(win)
 
+    collides = sprite.groupcollide(enemies, bullets, True, True)
+    for _ in collides:
+      score += 1
+      if ammo < max_ammo:
+        ammo += 1 
+      enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
+      enemies.add(enemy)
+    
+    for enemy in enemies:
+      if sprite.collide_rect(player, enemy):
+        life -= 1
+        enemy.kill()
+        new_enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
+        enemies.add(new_enemy)
+        player.rect.x = 300
+        player.rect.y = 400
+   
+    if ammo > 0:
+      ammo_text = stat_font.render(f"Ammo: {ammo}", True, (255, 255, 0))
+      win.blit(ammo_text, (10, 90))
+    else:
+      ammo_text = stat_font.render("Out of Ammo!", True, (255, 0, 0))
+      win.blit(ammo_text, (10, 90))
+
+    if time.get_ticks() % 120 == 0 and ammo < max_ammo:
+      ammo += 1
 
   display.update()
   clock.tick(60)
