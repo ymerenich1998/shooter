@@ -44,7 +44,16 @@ class Bullet(GameSprite):
     self.rect.y -= self.speed
     if self.rect.y < 0:
       self.kill()
-  
+
+class Boom(GameSprite):
+  def __init__(self, player_image, player_x, player_y, player_speed, player_width=65, player_height=65):
+    super().__init__(player_image, player_x, player_y, player_speed, player_width, player_height)
+    self.n=1
+  def update(self):
+    if self.n >= 17:
+      self.kill()
+    self.image=image.load(f"boom\\{self.n}.png")
+    self.n+=1
 win_width = 700
 win_height = 500
 win =  display.set_mode((win_width, win_height))
@@ -75,7 +84,7 @@ finished = False
 max_ammo = 10
 
 def start_game():
-    global finished, player, lost, enemies, score, bullets, ammo, life    
+    global finished, player, lost, enemies, score, bullets, ammo, life, booms
     finished = False
     lost = 0
     score = 0
@@ -86,11 +95,11 @@ def start_game():
     player.reset()
     enemies = sprite.Group()
     bullets = sprite.Group()
+    booms = sprite.Group()
     for _ in range(5):
         enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
         enemies.add(enemy)
     print("Game restarted")
-
 
 start_game()
 
@@ -104,20 +113,19 @@ while run:
       if e.key == K_r :
         start_game()
       if e.key == K_SPACE:
-        if ammo > 0:
+        if ammo > 0 and not finished:
           player.fire()
           ammo -= 1
           fire_sound.play()
           print("Bullet fired")
     if e.type == MOUSEBUTTONDOWN:
       if e.button == 1:
-        if not finished:
-          if ammo > 0:
-            ammo -= 1
-            player.fire()
-            fire_sound.play()
-            print("Bullet fired")
-        
+        if ammo > 0 and not finished:
+          ammo -= 1
+          player.fire()
+          fire_sound.play()
+          print("Bullet fired")
+      
   if not finished:
     win.blit(bg, (0, 0))
 
@@ -145,10 +153,12 @@ while run:
     player.update()
     enemies.update()
     bullets.update()
+    booms.update()
 
     player.reset()
     enemies.draw(win)
     bullets.draw(win)
+    booms.draw(win)
 
     collides = sprite.groupcollide(enemies, bullets, True, True)
     for _ in collides:
@@ -157,11 +167,17 @@ while run:
         chance = randint(0, 1)
         if chance == 1:
           ammo += 1
+      booms.add(
+        Boom("boom\\1.png", _.rect.x-10, _.rect.y-10, 0)
+      )
       enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
       enemies.add(enemy)
     
     for enemy in enemies:
       if sprite.collide_rect(player, enemy):
+        booms.add(
+          Boom("boom\\1.png", player.rect.x-10, player.rect.y-10, 0)
+        )
         life -= 1
         enemy.kill()
         new_enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
@@ -176,9 +192,11 @@ while run:
       ammo_text = stat_font.render("Out of Ammo!", True, (255, 0, 0))
       win.blit(ammo_text, (10, 90))
 
-    if time.get_ticks() % 150 == 0 and ammo < max_ammo:
+    if time.get_ticks() % 120 == 0 and ammo < max_ammo:
       ammo += 1
+
 
   display.update()
   clock.tick(60)
   
+ 
