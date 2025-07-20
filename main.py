@@ -30,13 +30,14 @@ class Player(GameSprite):
 
 # Class Enemy
 class Enemy(GameSprite):
-  def update(self):
+  def update(self, points = True):
     global lost
     self.rect.y += self.speed
     if self.rect.y > win_height:
       self.rect.y = 0
       self.rect.x = randint(80, win_width - 80)
-      lost += 1
+      if points:
+        lost += 1
 
 # Class Bullet
 class Bullet(GameSprite):
@@ -54,6 +55,7 @@ class Boom(GameSprite):
       self.kill()
     self.image=image.load(f"boom\\{self.n}.png")
     self.n+=1
+
 win_width = 700
 win_height = 500
 win =  display.set_mode((win_width, win_height))
@@ -84,7 +86,7 @@ finished = False
 max_ammo = 10
 
 def start_game():
-    global finished, player, lost, enemies, score, bullets, ammo, life, booms
+    global finished, player, lost, enemies, score, bullets, ammo, life, booms, asteroids
     finished = False
     lost = 0
     score = 0
@@ -94,11 +96,16 @@ def start_game():
     player = Player("rocket.png", 300, 400, 5, 80, 80)
     player.reset()
     enemies = sprite.Group()
+    asteroids = sprite.Group()
     bullets = sprite.Group()
     booms = sprite.Group()
     for _ in range(5):
         enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
         enemies.add(enemy)
+    for _ in range(3):
+        asteroid = Enemy("asteroid.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
+        asteroids.add(asteroid)
+        
     print("Game restarted")
 
 start_game()
@@ -154,11 +161,13 @@ while run:
     enemies.update()
     bullets.update()
     booms.update()
+    asteroids.update(False)
 
     player.reset()
     enemies.draw(win)
     bullets.draw(win)
     booms.draw(win)
+    asteroids.draw(win)
 
     collides = sprite.groupcollide(enemies, bullets, True, True)
     for _ in collides:
@@ -173,6 +182,18 @@ while run:
       enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
       enemies.add(enemy)
     
+    asteroidsCollides = sprite.groupcollide(asteroids, bullets, True, True)
+    for _ in asteroidsCollides:
+      if ammo < max_ammo:
+        chance = randint(0, 1)
+        if chance == 1:
+          ammo += 1
+      booms.add(
+        Boom("boom\\1.png", _.rect.x-10, _.rect.y-10, 0)
+      )
+      asteroid = Enemy("asteroid.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 2), 80, 40)
+      asteroids.add(asteroid)
+    
     for enemy in enemies:
       if sprite.collide_rect(player, enemy):
         booms.add(
@@ -182,6 +203,18 @@ while run:
         enemy.kill()
         new_enemy = Enemy("ufo.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
         enemies.add(new_enemy)
+        player.rect.x = 300
+        player.rect.y = 400
+    
+    for asteroid in asteroids:
+      if sprite.collide_rect(player, asteroid):
+        booms.add(
+          Boom("boom\\1.png", player.rect.x-10, player.rect.y-10, 0)
+        )
+        life -= 1
+        asteroid.kill()
+        new_asteroid = Enemy("asteroid.png", randint(80, win_width - 80), randint(-100, -40), randint(1, 3), 80, 40)
+        asteroids.add(new_asteroid)
         player.rect.x = 300
         player.rect.y = 400
    
